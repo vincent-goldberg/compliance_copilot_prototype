@@ -7,9 +7,10 @@ import os
 # from langchain.vectorstores import Pinecone
 # import pinecone
 
-
+from pprint import pprint
 from langchain.embeddings import HuggingFaceBgeEmbeddings
 from langchain.llms import HuggingFaceHub
+from langchain.chat_models import ChatOllama
 from langchain.chains import RetrievalQA
 from langchain.vectorstores import Pinecone
 import pinecone
@@ -32,23 +33,30 @@ def run_llm(query: str):
         encode_kwargs=encode_kwargs
     )
 
+    
     docsearch = Pinecone.from_existing_index(
         embedding=embeddings,
         index_name=INDEX_NAME,
     )
+    print('*****Pulled PineCone Data*****')
     # chat = ChatOpenAI(
     #     verbose=True,
     #     temperature=0,
     # )
-    chat = HuggingFaceHub(repo_id="gpt2", huggingfacehub_api_token="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")
+    
+    # chat = ChatOllama(model="llama2", verbose=True, temperature=0)
 
+    chat = HuggingFaceHub(repo_id="tiiuae/falcon-7b", huggingfacehub_api_token="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", model_kwargs={'max_length':1000})
+    print('***** Model Generated *****')
     qa = RetrievalQA.from_llm(
         llm=chat, retriever=docsearch.as_retriever(), return_source_documents=True
     )
+    print('***** QA Retriever Built *****')
     return qa({"query": query})
 
+# FOR TESTING IN IDE
 if __name__ == "__main__":
-    print(run_llm(query="What does NOAA do?"))
+    pprint(run_llm(query="What are Ground operations?"))
 
 
 

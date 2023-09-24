@@ -21,6 +21,7 @@ streamlit-chat = "*"
 tqdm = "*"
 pypdf = "^3.16.1"
 sentence-transformers = "^2.2.2"
+watchdog = "^3.0.0"
 
 [build-system]
 requires = ["poetry-core"]
