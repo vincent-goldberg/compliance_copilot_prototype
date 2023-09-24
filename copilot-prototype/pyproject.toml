@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "copilot-prototype"
+version = "0.1.0"
+description = ""
+authors = ["vincent-goldberg <vincent.goldberg@berkeley.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+langchain = "^0.0.300"
+streamlit = "^1.27.0"
+unstructured="*"
+nltk="*"
+black = "*"
+pinecone-client = "*"
+fastapi = "*"
+jinja2 = "*"
+uvicorn = "*"
+streamlit-chat = "*"
+tqdm = "*"
+pypdf = "^3.16.1"
+sentence-transformers = "^2.2.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
