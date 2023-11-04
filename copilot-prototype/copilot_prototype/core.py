@@ -1,62 +1,66 @@
+from typing import Any
+
+
+
+# Chat packages
+import torch
 import os
-# from typing import Any, Dict, List
-
-# from langchain.embeddings.openai import OpenAIEmbeddings
-# from langchain.chat_models import ChatOpenAI
-# from langchain.chains import ConversationalRetrievalChain
-# from langchain.vectorstores import Pinecone
-# import pinecone
-
-from pprint import pprint
+from dotenv import load_dotenv
 from langchain.embeddings import HuggingFaceBgeEmbeddings
-from langchain.llms import HuggingFaceHub
-from langchain.chat_models import ChatOllama
-from langchain.chains import RetrievalQA
-from langchain.vectorstores import Pinecone
-import pinecone
+from langchain.chains import ConversationalRetrievalChain, RetrievalQA
+from langchain import HuggingFaceHub
 
-pinecone.init(
-    api_key='c4092dfb-b826-4ccc-b82d-288d998c7b98',
-    environment='gcp-starter',
+from langchain.llms import Ollama
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
+
+
+
+
+# Global variables
+load_dotenv()   # Load environment variables from .env file
+huggingfacehub_api_token = os.getenv("HUGGINGFACE_API_KEY")
+mistral_repo = 'mistralai/Mistral-7B-Instruct-v0.1'
+
+
+# Tokenizer
+embedd_model = 'BAAI/bge-reranker-large'
+model_kwargs = {"device": 0}
+encode_kwargs = {"normalize_embeddings": True}
+embeddings = HuggingFaceBgeEmbeddings(
+    model_name=embedd_model, model_kwargs=model_kwargs, encode_kwargs=encode_kwargs
 )
 
-INDEX_NAME = "compliance-copilot-prototype"
+
+# Building LLM
+
+llm = Ollama(model="mistral",
+             verbose=True,
+             callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
 
 
-def run_llm(query: str):
-    model_name = 'BAAI/bge-large-en-v1.5'
-    model_kwargs = {'device': 'cpu'}
-    encode_kwargs = {'normalize_embeddings': False}
-    embeddings = HuggingFaceBgeEmbeddings(
-        model_name=model_name,
-        model_kwargs=model_kwargs,
-        encode_kwargs=encode_kwargs
-    )
+def run_llm(vector_database: Any, query: str):
+# def run_llm(retriever: Any, query: str, chat_history: List[Dict[str, Any]] = []):
+   
 
-    
-    docsearch = Pinecone.from_existing_index(
-        embedding=embeddings,
-        index_name=INDEX_NAME,
-    )
-    print('*****Pulled PineCone Data*****')
-    # chat = ChatOpenAI(
-    #     verbose=True,
-    #     temperature=0,
+    # qa = ConversationalRetrievalChain.from_llm(
+    #     llm=ollama, retriever=docsearch.as_retriever(), return_source_documents=True
     # )
+
+    retriever = vector_database.as_retriever(search_type="mmr", search_kwargs={'k': 10, 'fetch_k': 50})
     
-    # chat = ChatOllama(model="llama2", verbose=True, temperature=0)
-
-    chat = HuggingFaceHub(repo_id="tiiuae/falcon-7b", huggingfacehub_api_token="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", model_kwargs={'max_length':1000})
-    print('***** Model Generated *****')
-    qa = RetrievalQA.from_llm(
-        llm=chat, retriever=docsearch.as_retriever(), return_source_documents=True
+    qa = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever,
+        return_source_documents=True
     )
-    print('***** QA Retriever Built *****')
-    return qa({"query": query})
 
-# FOR TESTING IN IDE
-if __name__ == "__main__":
-    pprint(run_llm(query="What are Ground operations?"))
+    results = qa({"query": query})
+    response = results["result"] 
+    sources = [doc.metadata["page"] for doc in results["source_documents"]]
 
+    return response, sources
 
 
