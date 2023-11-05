@@ -1,21 +1,17 @@
-from typing import Any
-
-
+from typing import Any, List, Dict
 
 # Chat packages
 import torch
 import os
 from dotenv import load_dotenv
 from langchain.embeddings import HuggingFaceBgeEmbeddings
-from langchain.chains import ConversationalRetrievalChain, RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
 from langchain import HuggingFaceHub
 
+# Ollama for local machines
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-
-
-
 
 
 # Global variables
@@ -34,33 +30,22 @@ embeddings = HuggingFaceBgeEmbeddings(
 
 
 # Building LLM
-
 llm = Ollama(model="mistral",
              verbose=True,
              callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
 
+# Function to call LLM and generate response
+def run_llm(vector_database: Any, query: str, chat_history: List[Dict[str, Any]] = []):
 
-def run_llm(vector_database: Any, query: str):
-# def run_llm(retriever: Any, query: str, chat_history: List[Dict[str, Any]] = []):
-   
-
-    # qa = ConversationalRetrievalChain.from_llm(
-    #     llm=ollama, retriever=docsearch.as_retriever(), return_source_documents=True
-    # )
-
-    retriever = vector_database.as_retriever(search_type="mmr", search_kwargs={'k': 10, 'fetch_k': 50})
-    
-    qa = RetrievalQA.from_chain_type(
+    qa = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        chain_type="stuff",
-        retriever=retriever,
+        retriever=vector_database.as_retriever(search_type="mmr", search_kwargs={'k': 5, 'fetch_k': 50}),
         return_source_documents=True
     )
-
-    results = qa({"query": query})
-    response = results["result"] 
+    
+    results = qa({"question": query,  "chat_history": chat_history})
+    response = results["answer"] 
     sources = [doc.metadata["page"] for doc in results["source_documents"]]
 
     return response, sources
-
 

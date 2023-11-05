@@ -22,17 +22,16 @@ embeddings = HuggingFaceBgeEmbeddings(
     model_name=embedd_model, model_kwargs=model_kwargs, encode_kwargs=encode_kwargs
 )
 
-
-
 def ingest_doc(doc_path, file_name):
     
     # Checking if vector database exists, creating it if not
-    outdir = "./vector_databases/"
+    outdir = "./backend/vector_databases/"
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     
     # Creating database path
     db_path = os.path.join(outdir, file_name)
+    print('Db Path: ', db_path)
 
     # Checking if the database already exists, and creating it if it doesn't
     if not os.path.exists(db_path):        
@@ -53,8 +52,3 @@ def ingest_doc(doc_path, file_name):
         vectorstore = Chroma(persist_directory=db_path, embedding_function=embeddings)                       
 
     return vectorstore
-
-
-
-# if __name__ == "__main__":
-#     ingest_docs()
