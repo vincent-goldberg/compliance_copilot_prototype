@@ -26,6 +26,8 @@ pypdf2 = "^3.0.1"
 faiss-cpu = "^1.7.4"
 chromadb = "^0.4.15"
 python-dotenv = "^1.0.0"
+tiktoken = "^0.5.1"
+langchainhub = "^0.1.13"
 
 [build-system]
 requires = ["poetry-core"]
